@@ -3,7 +3,7 @@ FLAGS = gflags.FLAGS
 
 
 # Train parameters
-gflags.DEFINE_integer('img_width', 384, 'Target Image Width')
+gflags.DEFINE_integer('img_width', 640, 'Target Image Width')
 gflags.DEFINE_integer('img_height', 192, 'Target Image Height')
 gflags.DEFINE_integer('batch_size', 16, 'Batch size in training and evaluation')
 gflags.DEFINE_float("beta1", 0.9, "Momentum term of adam")
@@ -25,9 +25,11 @@ gflags.DEFINE_bool('resume_train', False, 'Whether to restore a trained'
                    ' model for training')
 
 # Path Parameters
-gflags.DEFINE_string('root_dir',"/your/path/to/DAVIS_2016", 'Folder containig the evaluation dataset')
+gflags.DEFINE_string('root_dir',"/media/filippo/Filippo/ComputerVision/Dataset/Godard_KITTI/", 'Folder containig the evaluation dataset')
+gflags.DEFINE_string('flow_dir',"/media/filippo/Filippo/ComputerVision/Dataset/SelFlowProxy_Eigen/", 'Folder containig optical flow')
+gflags.DEFINE_string('filename',"./filenames/E_L_flow.txt", 'filename')
 gflags.DEFINE_string('train_partition', 'trainval', 'Training Partition to be used')
-gflags.DEFINE_string('dataset', 'DAVIS2016', 'Dataset used for evaluation. '
+gflags.DEFINE_string('dataset', 'KITTI', 'Dataset used for evaluation. '
                      ' Either SEGTRACK or FBMS or DAVIS2016')
 gflags.DEFINE_string('recover_ckpt', "", 'Checkpoint of the pre-trained recover.'
                      ' If None, it will train the recover from scratch.')
@@ -46,10 +48,10 @@ gflags.DEFINE_integer("save_freq", 5,
 
 # Testing parameters
 gflags.DEFINE_bool('generate_visualization', False, "Whether to save images while computing metrics")
-gflags.DEFINE_float("test_crop", 0.9, "central cropping percentages of input images at test time")
+gflags.DEFINE_float("test_crop", 1., "central cropping percentages of input images at test time")
 gflags.DEFINE_integer('test_temporal_shift', 1,
                       'Constant Temporal shift between the two images used to calculate flow images.')
-gflags.DEFINE_string("ckpt_file", "", "Model Checkpoint to be used for testing.")
+gflags.DEFINE_string("ckpt_file", "./checkpoints/unsupervised_detection_models/davis_best_model/model.best", "Model Checkpoint to be used for testing.")
 gflags.DEFINE_string("test_partition", "val", "Can be train/val/trainval")
-gflags.DEFINE_string('test_save_dir', "",
+gflags.DEFINE_string('test_save_dir', "./output",
                      "Test Folder for the experiment. It can store generated predictions and logs")
