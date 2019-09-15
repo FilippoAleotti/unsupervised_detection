@@ -81,20 +81,6 @@ class KittiReader(object):
     
     def image_inputs(self, batch_size):
         ''' Prepare a new batch for training '''
-        self.image_paths = self.get_image_paths_from_line(input_queue, self.number_of_paths_in_line)
-
-        fname_1 = tf.string_join([self.kitti_data_path, self.image_paths[0]])
-        fname_2 = tf.string_join([self.kitti_data_path, self.image_paths[1]])
-        flow_fname = tf.string_join([self.flow_datapath, self.image_paths[2]])
-
-        file_content = tf.read_file(fname_1)
-        image_1 = tf.image.decode_jpeg(file_content, channels=3)
-        image_1 = self.preprocess_image(image_1)
-        file_content = tf.read_file(fname_2)
-        image_2 = tf.image.decode_jpeg(file_content, channels=3)
-        image_2 = self.preprocess_image(image_2)
-        flow = self.tf_load_flo(flow_fname)
-        
         # Form training batches
         dataset = tf.data.TextLineDataset(self.filename_file)
         dataset = dataset.shuffle(buffer_size=self.number_samples,
@@ -105,7 +91,7 @@ class KittiReader(object):
         dataset = dataset.batch(batch_size, drop_remainder=False)
         dataset = dataset.prefetch(buffer_size=3*batch_size)
         iterator = dataset.make_initializable_iterator()
-        img1s, img2s, flow = iterator.get_next()
+        img1s, img2s, flow, _ = iterator.get_next()
         return (img1s, img2s, flow), iterator
     
     def dataset_map(self, input_queue):
@@ -127,9 +113,8 @@ class KittiReader(object):
         image_2 = tf.image.decode_jpeg(file_content, channels=3)
         image_2 = self.preprocess_image(image_2)
         flow = self.tf_load_flo(flow_fname)
-
         return image_1, image_2, flow, fname_1
-    
+
     def load_flo(self, filename):
             '''
                 Load a .flo file

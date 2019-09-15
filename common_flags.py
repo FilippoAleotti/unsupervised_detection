@@ -11,7 +11,7 @@ gflags.DEFINE_float("flow_normalizer", 80.0, "Scale for regularization of flow")
 gflags.DEFINE_integer("max_epochs", 40, "Maximum number of training epochs")
 gflags.DEFINE_integer("num_samples_train", 5000, "number of samples per epoch, "
                       "not necessarly corresponding to the number of training samples.")
-gflags.DEFINE_float("train_crop", 0.9, "minimum random cropping percentage of input images")
+gflags.DEFINE_float("train_crop", 1.0, "minimum random cropping percentage of input images")
 gflags.DEFINE_integer("max_temporal_len", 2, "Maximum delta time for image 2")
 gflags.DEFINE_integer("min_temporal_len", 1, "Minimum delta time for image 2")
 gflags.DEFINE_float("cbn", 0.5, "power to square loss (0.5 for L1, 1. for L2)")
@@ -37,7 +37,7 @@ gflags.DEFINE_string('flow_ckpt', "", 'Checkpoint to the pre-trained PWCNet')
 gflags.DEFINE_string('full_model_ckpt', "", 'File containing'
                      ' the checkpoint of the entire network. '
                      'Use this flag if you want to resume a training.')
-gflags.DEFINE_string('checkpoint_dir', "", "Experiment folder. It will contain"
+gflags.DEFINE_string('checkpoint_dir', "./logs/KITTI", "Experiment folder. It will contain"
                      "the saved checkpoints and tensorboard logs.")
 
 # Log parameters

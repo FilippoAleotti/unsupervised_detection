@@ -23,7 +23,8 @@ class AdversarialLearner(object):
     def load_training_data(self):
         with tf.name_scope("data_loading"):
             if self.config.dataset== 'KITTI':
-                reader = KittiReader(kitti_data_path=self.config.root_dir, flow_datapath=self.config.root.flow_dir, num_threads=self.config.num_threads)
+                reader = KittiReader(kitti_data_path=self.config.root_dir, flow_datapath=self.config.flow_dir, 
+                 num_threads=self.config.num_threads, filename_file=self.config.filename)
 
                 train_batch, train_iter = reader.image_inputs(batch_size=self.config.batch_size)
 
@@ -84,12 +85,6 @@ class AdversarialLearner(object):
                                                mask=tf.ones_like(generated_masks), # Entire image masked
                                                scope=scope,
                                                reuse=True)
-
-        # Compute IoU of the generated masks ( for validation only, will not be
-        # executed during training)
-        all_IoU = compute_all_IoU(pred_masks=generated_masks,
-                                  gt_masks=gt_masks)
-        sum_IoU = tf.reduce_sum(all_IoU)
 
         # Define now all training losses.
 
@@ -203,12 +198,9 @@ class AdversarialLearner(object):
         self.flow_gt_batch = flow_batch
         self.pred_flow = pred_flows*generated_masks + flow_batch * (1-generated_masks)
         self.pred_flow_compl = pred_flows*complementary_masks + flow_batch * (1-complementary_masks)
-        self.is_training = is_training_ph
         self.train_steps_per_epoch = \
             int(math.ceil(self.config.num_samples_train/self.config.batch_size))
-        self.val_steps_per_epoch = int(np.ceil(float(self.num_samples_val) / self.config.batch_size))
-        self.val_iou = sum_IoU
-        self.all_iou = all_IoU
+
 
     def collect_summaries(self):
         """Collects all summaries to be shown in the tensorboard"""
@@ -280,8 +272,6 @@ class AdversarialLearner(object):
             tf.trainable_variables()] + [self.global_step], max_to_keep=40)
         # Load pre-trained recover net
         recover_saver = tf.train.Saver(tf.trainable_variables(scope='FlownetS'))
-        # Load flow predictor
-        flow_saver = tf.train.Saver(tf.global_variables(scope='pwcnet'))
 
         sv = tf.train.Supervisor(logdir=config.checkpoint_dir,
                                  save_summaries_secs=0,
@@ -289,12 +279,7 @@ class AdversarialLearner(object):
 
         with sv.managed_session() as sess:
             print("Number of params: {}".format(sess.run(parameter_count)))
-            if os.path.isfile(self.config.flow_ckpt + ".index"):
-                flow_saver.restore(sess, self.config.flow_ckpt)
-                print("Flow net loaded from {}".format(self.config.flow_ckpt))
-            else:
-                raise IOError("Could not find flow ckpt file. Aborting.")
-
+           
             if config.resume_train:
                 if os.path.isfile(self.config.full_model_ckpt + ".index"):
                     checkpoint = self.config.full_model_ckpt
@@ -346,8 +331,7 @@ class AdversarialLearner(object):
                     fetches["loss_generator"] = self.losses['generator']
                     fetches["summary"] = self.step_sum
 
-                results = sess.run(fetches,
-                                   feed_dict={ self.is_training : True })
+                results = sess.run(fetches)
 
                 progbar.update(step % self.train_steps_per_epoch)
                 gs = results["global_step"]
@@ -365,40 +349,11 @@ class AdversarialLearner(object):
                     # This differ from the last when resuming training
                     train_epoch = int(step / self.train_steps_per_epoch)
                     progbar = Progbar(target=self.train_steps_per_epoch)
-                    self.epoch_end_callback(sess, sv, train_epoch)
                     if (train_epoch == self.config.max_epochs):
                         print("-------------------------------")
                         print("Training completed successfully")
                         print("-------------------------------")
                         break
-
-    def epoch_end_callback(self, sess, sv, epoch_num):
-        # Evaluate val loss
-        validation_iou = 0
-        print("\nComputing Validation IoU")
-        progbar = Progbar(target=self.val_steps_per_epoch)
-
-        for i in range(self.val_steps_per_epoch):
-            loss_iou = sess.run(self.val_iou,
-                             feed_dict={self.is_training: False})
-            validation_iou+= loss_iou
-            progbar.update(i)
-        validation_iou /= self.val_steps_per_epoch*self.config.batch_size
-
-        # Log to Tensorflow board
-        val_sum = sess.run(self.val_sum, feed_dict ={
-                           self.val_iou_ph: validation_iou})
-
-        sv.summary_writer.add_summary(val_sum, epoch_num)
-
-        print("Epoch [{}] Validation IoU: {}".format(
-            epoch_num, validation_iou))
-        # Model Saving
-        if validation_iou > self.min_val_iou:
-            self.save(sess, self.config.checkpoint_dir, 'best')
-            self.min_val_iou = validation_iou
-        if epoch_num % self.config.save_freq == 0:
-            self.save(sess, self.config.checkpoint_dir, epoch_num)
 
     def build_test_graph(self):
         """This graph will be used for testing. In particular, it will

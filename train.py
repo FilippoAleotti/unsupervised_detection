@@ -26,7 +26,7 @@ def _main():
         print_flags_dict[key] = getattr(FLAGS, key)
 
     pp.pprint(print_flags_dict)
-
+  
     if not os.path.exists(FLAGS.checkpoint_dir):
         os.makedirs(FLAGS.checkpoint_dir)
 
