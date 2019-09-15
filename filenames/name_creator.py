@@ -1,5 +1,5 @@
 import os
-inp_file = 'Eigen'
+inp_file = 'E_R'
 
 with open('{}.txt'.format(inp_file),'r') as f:
     lines = f.readlines()
