@@ -42,8 +42,7 @@ def _test_masks():
 
         sess.run(learner.test_iterator.initializer)
 
-        n_steps = int(np.ceil(learner.test_samples / float(FLAGS.batch_size)))
-
+        n_steps = len(samples)
         progbar = Progbar(target=n_steps)
 
         i = 0
@@ -63,14 +62,12 @@ def _test_masks():
             generated_mask = inference['mask']
             
             # Verbose image generation
-            save_dir = os.path.join(FLAGS.test_save_dir)
-            if not os.path.isdir(save_dir):
-                os.mkdir(save_dir)
-            print(samples[step])
-            filename = os.path.join(save_dir, "frame_{:08d}.png".format(step))
+            save_dir = os.path.join(FLAGS.test_save_dir, os.path.dirname(samples[step].split(' ')[0]))
+            if not os.path.exists(save_dir):
+                os.makedirs(save_dir)
+            filename = os.path.join(save_dir, os.path.basename(samples[step].split(' ')[0]))
             cv2.imwrite(filename, generated_mask.squeeze()*255.)
             i+=1
-            return
             progbar.update(step)
 
 def main(argv):
