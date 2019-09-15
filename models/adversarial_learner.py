@@ -24,10 +24,11 @@ class AdversarialLearner(object):
         with tf.name_scope("data_loading"):
             if self.config.dataset== 'KITTI':
                 reader = KittiReader(kitti_data_path=self.config.root_dir, flow_datapath=self.config.flow_dir, 
+                 height=self.config.img_height, width=self.config.img_width, 
                  num_threads=self.config.num_threads, filename_file=self.config.filename)
 
                 train_batch, train_iter = reader.image_inputs(batch_size=self.config.batch_size)
-
+                self.num_samples_train = reader.number_samples
             else:
                 raise IOError("Dataset should be KITTI")
 
@@ -199,7 +200,7 @@ class AdversarialLearner(object):
         self.pred_flow = pred_flows*generated_masks + flow_batch * (1-generated_masks)
         self.pred_flow_compl = pred_flows*complementary_masks + flow_batch * (1-complementary_masks)
         self.train_steps_per_epoch = \
-            int(math.ceil(self.config.num_samples_train/self.config.batch_size))
+            int(math.ceil(self.num_samples_train/self.config.batch_size))
 
 
     def collect_summaries(self):
@@ -234,13 +235,6 @@ class AdversarialLearner(object):
                                  collections=["step_sum"])
 
         self.step_sum = tf.summary.merge(tf.get_collection('step_sum'))
-        #######################
-        # VALIDATION ERROR SUM#
-        #######################
-        self.val_iou_ph = tf.placeholder(tf.float32, [])
-        tf.summary.scalar("IoU on Validation", self.val_iou_ph,
-                          collections = ["validation_summary"])
-        self.val_sum = tf.summary.merge(tf.get_collection('validation_summary'))
 
     def save(self, sess, checkpoint_dir, step):
         model_name = 'model'

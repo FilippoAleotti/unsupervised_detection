@@ -24,15 +24,16 @@ class KittiReader(object):
                  kitti_data_path,
                  flow_datapath,
                  filename_file,
-                 num_threads=6,
-                 height=384,
-                 width=1280):
+                 height,
+                 width,
+                 num_threads=6):
         self.num_threads = num_threads
         self.filename_file = filename_file
         self.number_of_paths_in_line = self.get_number_of_paths(self.filename_file)
         self.kitti_data_path = kitti_data_path
         self.flow_datapath = flow_datapath
         self.number_samples = self.get_num_samples(filename_file)
+        print('NUMBER TRAINING SAMPLES:{}'.format(self.number_samples))
         self.height = height
         self.width  = width
     
